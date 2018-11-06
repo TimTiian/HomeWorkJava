@@ -1,0 +1,39 @@
+package EE552hw;
+
+import java.io.*;
+import java.util.Scanner;
+
+public class ParseText {
+
+    public static String readText(String filename) throws IOException {
+        StringBuffer text = new StringBuffer();
+        File file = new File(filename);
+        FileReader fileReader = new FileReader(file);
+        BufferedReader bufferedReader = new BufferedReader(fileReader);
+        String line;
+        while ((line = bufferedReader.readLine()) != null) {
+            text.append(line);
+            text.append(' ');
+        }
+        return text.toString().replaceAll("\\s+", " ").replaceAll("(^\\s*)|(\\s*$)", "");
+    }
+
+    public static void main(String[] args) throws IOException{
+        Scanner shortwords = new Scanner(new FileReader("shortwords.txt"));
+        String[] article = ParseText.readText("Frankenstein.txt").split(" ");
+        StringBuffer freq = new StringBuffer();
+        while (shortwords.hasNext()){
+            String word = shortwords.next();
+            int count = 0;
+            for(String s : article){
+                if (word.equals(s)) count++;
+            }
+            if (count>=50){
+                freq.append(word+": "+Integer.toString(count)+"\n");
+            }
+        }
+        System.out.println(freq);
+    }
+
+
+}
