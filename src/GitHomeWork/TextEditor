@@ -1,0 +1,386 @@
+package EE552hw;
+/*
+ * 
+ * @author：Chenliang Tian
+ * @date：Nov 9 2018
+ *
+ */
+
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.*;
+import java.io.*;
+
+import static java.awt.event.KeyEvent.VK_F4;
+
+public class TextEditor {
+    //define the component：
+    private Process po;
+    private JFrame f;
+    private MenuBar mb;    //menu
+    private Menu mu1;       //menu
+    private Menu mu2;
+
+    private MenuItem newItem, openItem, saveItem, closeItem, compItem, runItem;   //menu content
+    private FileDialog openDia, saveDia;    //Pop-up save and open boxes
+    private File file;
+    private JLabel stateBar;
+    private JScrollPane js;
+    private Console con;
+    private TextEditor texteditor;
+
+    JTextArea t = new JTextArea();
+
+    //constructor function
+    public TextEditor() {
+        init();  //Call the initialization function
+    }
+
+    //Initialize the component
+    public void init() {
+        stateBar = new JLabel("Unmodified");
+        f = new JFrame("Simple Notepad");
+        mb = new MenuBar();
+        mu1 = new Menu("File");
+        mu2 = new Menu("Build");
+        newItem = new MenuItem("New"); // new file
+        openItem = new MenuItem("Open"); // open file
+        saveItem = new MenuItem("Save"); // save file
+        closeItem = new MenuItem("Quit");// quit file
+        compItem = new MenuItem("Compile");
+        runItem = new MenuItem("Run");
+
+        js = new JScrollPane(t);
+        js.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+        js.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+        js.setViewportView(t);
+        f.add(js, BorderLayout.CENTER);
+        Font fo = new Font("Times", Font.PLAIN, 18);
+        t = new JTextArea();
+        t.setFont(fo);
+        f.add(t);
+        //add function to menu
+        mu1.add(newItem);
+        mu1.add(openItem);
+        mu1.add(saveItem);
+        mu1.add(closeItem);
+        mu2.add(compItem);
+        mu2.add(runItem);
+        mb.add(mu1);
+        mb.add(mu2);
+
+        f.setMenuBar(mb);
+        t.setLineWrap(true); //Line breaks when the specified width is reached
+        js = new JScrollPane(t);
+        js.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+        js.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+        js.setViewportView(t);
+        f.add(js, BorderLayout.CENTER);
+
+        openDia = new FileDialog(f, "Open", FileDialog.LOAD);
+        saveDia = new FileDialog(f, "Save", FileDialog.SAVE);
+        //configure JFrame properties
+        f.setBounds(200, 200, 800, 600);
+        f.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        f.setVisible(true);
+        //Call event function
+        event();
+    }
+
+    //Event function, which handles events
+    public void event() {
+        //new option
+        newItem.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                //Call the method that create the new file
+                newFile();
+            }
+        });
+        //Open option
+        openItem.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                //Call the method that opens the file
+                openFile();
+            }
+        });
+        //Save option
+        saveItem.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                //Call the method to save the file。
+                saveFile();
+            }
+        });
+
+        t.addKeyListener(new KeyAdapter() {
+            //Keyboard press method
+            public void keyPressed(KeyEvent e) {
+                if (e.isControlDown() && e.getKeyCode() == KeyEvent.VK_S) {
+                    //Call the method to save the file
+                    saveFile();
+                }
+            }
+        });
+        //Close the options
+        closeItem.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                //Exit Notepad
+                closeFile();
+            }
+        });
+        //Compile the documentary
+        compItem.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                compileFile();
+            }
+        });
+
+        runItem.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                run();
+            }
+        });
+    }
+
+    //New file function
+    public void newFile() {
+        t.setText(null);
+    }
+
+    //open file function
+    public void openFile() {
+        openDia.setVisible(true); //Set it to display
+        //Get the path and file name
+        String dirPath = openDia.getDirectory();
+        String fileName = openDia.getFile();
+        //Prevent click cancel error
+        if (dirPath == null || fileName == null)
+            return;
+        t.setText(""); //Clear the text area
+        file = new File(dirPath, fileName); //Create file object
+        //Read the data by line and display in the text area
+        try {
+            BufferedReader br = new BufferedReader(new FileReader(file));
+            String line = null;
+            while ((line = br.readLine()) != null) {
+                t.append(line + "\r\n");
+            }
+            br.close();
+        } catch (IOException ex) {
+            throw new RuntimeException("Read error");
+        }
+    }
+
+    //The method to save the text
+    public void saveFile() {
+        //Determine if the file exists
+        if (file == null) {
+            saveDia.setVisible(true);
+            String dirPath = saveDia.getDirectory();
+            String fileName = saveDia.getFile();
+            //Prevent click cancel error
+            if (dirPath == null || fileName == null)
+                return;
+            //because the file does not exist, so you need to create a file object
+            file = new File(dirPath, fileName);
+        }
+        //Write data to a file
+        try {
+            BufferedWriter bw = new BufferedWriter(new FileWriter(file));
+            String info = t.getText();  //Get the text area information
+            bw.write(info);  //Write operation
+            bw.flush();
+            bw.close();
+        } catch (IOException e1) {
+            throw new RuntimeException();
+        }
+    }
+
+    public void closeFile() { //Whether the file is saved or not
+        if (isCurrentFileSaved()) { // Release window resources, then close the program
+            System.exit(0);
+        } else {
+            int option = JOptionPane.showConfirmDialog(
+                    null, "File modified, saved or not？", "Save File？",
+                    JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE, null);
+            switch (option) {
+                case JOptionPane.YES_OPTION:
+                    saveFile();
+                    break;
+                case JOptionPane.NO_OPTION:
+                    System.exit(0);
+            }
+        }
+    }
+
+    private boolean isCurrentFileSaved() {
+        if (stateBar.getText().equals("Unmodified")) {
+            return false;
+        } else {
+            return true;
+        }
+    }
+
+    //compile java file
+    public void compileFile() {
+        saveFile();
+        if (file == null) {
+            JOptionPane.showMessageDialog(this.f, "No Java source files are available!");
+        }
+        if (file.getName().startsWith(".java", file.getName().length() - 6)) {
+            JOptionPane.showMessageDialog(this.f, "The current file is not a Java source file!");
+        }
+        try {
+            Process po = Runtime.getRuntime().exec("javac " + file.getPath());
+            BufferedReader br = new BufferedReader(new InputStreamReader(po.getErrorStream()));
+            con = new Console(texteditor);
+            con.textFieldInput.setEditable(false);
+            con.addKeyListener(new KeyListener() {
+                @Override
+                public void keyTyped(KeyEvent e) {
+
+                }
+
+                @Override
+                public void keyPressed(KeyEvent e) {
+                    System.out.println(e.getKeyCode());
+                    if (e.getKeyCode() == 115) ;
+                    try {
+                        String err = br.readLine();
+                        con.textArea.setText("´Error or warning:" + err);
+                    } catch (IOException err) {
+
+                    }
+                }
+
+                @Override
+                public void keyReleased(KeyEvent e) {
+
+                }
+            });
+            JOptionPane.showMessageDialog(this.f, "Compile complete");
+        } catch (Exception e1) {
+            e1.printStackTrace();
+        }
+    }
+
+    private void run() {
+        consoleInput();
+
+    }
+
+    public void consoleInput() {
+        try {
+            con.textFieldInput.requestFocus();
+            String fileName = file.getName().substring(0, file.getName().length() - 5);
+            String filePath = file.getPath().substring(0, file.getPath().indexOf(f.getName()));
+            po = Runtime.getRuntime().exec("java -cp " + filePath + " " + fileName);
+            new Thread() {
+                public void run() {
+                    consoleErrInput();
+                }
+
+            }.start();
+            BufferedReader br = new BufferedReader(new InputStreamReader(po.getInputStream()));
+            String runTimeMessage = null;
+            while (true) {
+                while ((runTimeMessage = br.readLine()) != null)
+                    con.textArea.append(runTimeMessage + "\n");
+                synchronized (this) {
+                    wait();
+                }
+            }
+        } catch (IOException e1) {
+            e1.printStackTrace();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void consoleErrInput() {
+        try {
+            BufferedReader br = new BufferedReader(new InputStreamReader(po.getErrorStream()));
+            String runTimeErr = null;
+            while (true) {
+                while ((runTimeErr = br.readLine()) != null)
+                    con.textArea.append(runTimeErr + "\n");
+                synchronized (this) {
+                    wait();
+                }
+            }
+        } catch (IOException e1) {
+            e1.printStackTrace();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void consoleOutput() {
+        try {
+            PrintWriter pw = new PrintWriter(po.getOutputStream());
+            String str = con.textFieldInput.getText();
+            if (str.length() != 0) {
+                pw.write(str + "\n");
+                pw.flush();
+            }
+            con.textArea.append(str + "\n");
+            con.textFieldInput.setText("");
+            synchronized (this) {
+                notify();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+
+    public static void main(String[] args) {
+        new TextEditor();
+    }
+
+}
+
+class Console extends JDialog {
+    JTextArea textArea = new JTextArea();
+    JTextField textFieldInput = new JTextField();
+
+    /**
+     * Create the dialog.
+     */
+    public Console(final TextEditor texteditor) {
+        setTitle("Console");
+        setResizable(false);
+        setBounds(100, 100, 600, 300);
+        getContentPane().setLayout(null);
+
+        JScrollPane scrollPane = new JScrollPane();
+        scrollPane.setBounds(0, 0, 600, 280);
+        getContentPane().add(scrollPane);
+        textArea.setEditable(false);
+
+        scrollPane.setViewportView(textArea);
+        textArea.setFont(new Font("Bold", Font.BOLD, 18));
+
+        textFieldInput.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                texteditor.consoleOutput();
+            }
+        });
+        textFieldInput.setForeground(Color.BLACK);
+        textFieldInput.setBounds(0, 283, 534, 21);
+        getContentPane().add(textFieldInput);
+        textFieldInput.setColumns(10);
+
+        JButton btnInput = new JButton("Output");
+        btnInput.addActionListener(e -> texteditor.consoleOutput());
+        btnInput.setBounds(534, 282, 93, 23);
+        getContentPane().add(btnInput);
+        this.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+        this.setVisible(true);
+    }
+}
