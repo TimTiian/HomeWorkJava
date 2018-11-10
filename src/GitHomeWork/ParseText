@@ -15,9 +15,10 @@ public class ParseText {
             text.append(line);
             text.append(' ');
         }
-        return text.toString().replaceAll("\\s+", " ").replaceAll("(^\\s*)|(\\s*$)", "");
+       String search0 = text.toString().replaceAll("\\s+", " ").replaceAll("(^\\s*)|(\\s*$)", "");
+       String search = search0.replace(",","").replace(":","").toLowerCase();
+       return search;
     }
-
     public static void main(String[] args) throws IOException{
         Scanner shortwords = new Scanner(new FileReader("shortwords.txt"));
         String[] article = ParseText.readText("Frankenstein.txt").split(" ");
@@ -34,6 +35,4 @@ public class ParseText {
         }
         System.out.println(freq);
     }
-
-
 }
