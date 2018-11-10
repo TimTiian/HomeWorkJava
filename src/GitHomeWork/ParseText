@@ -2,6 +2,11 @@ package EE552hw;
 
 import java.io.*;
 import java.util.Scanner;
+/*
+ * @author Chenliang Tian
+ * @Date Nov 9 2018
+ *
+ */
 
 public class ParseText {
 
