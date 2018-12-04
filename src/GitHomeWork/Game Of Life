@@ -1,5 +1,11 @@
 package EE552hw;
 
+/*
+ *@date Dec 4 2018
+ *@author Chenliang Tian
+ *
+ */
+
 import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
